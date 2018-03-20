@@ -1,0 +1,37 @@
+.contents{position: relative; margin-top: 70px; clear: both; padding: 0 15px; margin-bottom: 10px;}
+
+.container {
+    margin-top: 100px;
+    max-width: 1000px;
+}
+.features {
+    margin-top: 0px;
+}
+.features .media {
+    margin-top: 20px;
+}
+.features .featureIcon {
+    font-size: 50px;
+}
+table.notice-content{
+    width: 100%;
+}
+
+table.notice-content td.title{
+    text-align: left;
+    font-weight:600;
+    width: 80%;
+    padding-bottom: 7px;
+}
+table.notice-content td.writetime{
+    text-align: right;
+    vertical-align: bottom;
+    font-size: xx-small;
+    width: 20%;
+    color: rgba(132,132,132,100);
+}
+table.notice-content td.content{
+    text-align: left;
+    width: 100%;
+    color: rgba(51,153,204,100);
+}

@@ -1,0 +1,73 @@
+<div class="contents">
+				<h2>거래내역</h2>
+				<div class="stock">
+					<table>
+						<tbody>
+							<tr>
+								<td class="text_right">거래기간 : </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dpFrom" [(ngModel)]="model.fromDt" name="fromDt" value="2017-11-20">
+                    <mat-datepicker-toggle matSuffix [for]="dpFrom"></mat-datepicker-toggle>
+                    <mat-datepicker #dpFrom></mat-datepicker>
+                  </mat-form-field>
+                </td>
+                <td class="text_right">~ </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dpTo" [(ngModel)]="model.toDt" name="toDt">
+                    <mat-datepicker-toggle matSuffix [for]="dpTo"></mat-datepicker-toggle>
+                    <mat-datepicker #dpTo></mat-datepicker>
+                  </mat-form-field>
+                </td>
+								<td><a class="btn_st btn_search" (click)="getReport()">조 회</a></td>
+								<!-- <td><button type="button" (click)="openPrint()" mat-raised-button color="accent">출력</button></td> -->
+							</tr>
+						</tbody>
+					</table>
+        <!-- </form> -->
+				</div>
+
+				<!--result-->
+				<div class="result">
+				<h3 *ngIf="sortedData">{{sortedData.length}}건이 검색되었습니다.</h3>
+
+				<!--내용_반복-->
+				<table class="cont" width="900">
+					<colgroup>
+            <col width="4%"/>
+            <col width="4%"/>
+						<col width="4%"/>
+						<col width="4%"/>
+						<col width="4%"/>
+					</colgroup>
+          <thead class="ttl">
+						<tr>
+              <th>일자</th>
+              <th>적 요</th>
+							<th>매 출 액</th>
+							<th>입 금 액</th>
+							<th>잔 액</th>
+						</tr>
+					</thead>
+					<tbody class="cont">
+            <tr *ngIf="sortedData == null || sortedData.length == 0"><td colspan="5" class="text_center">No data to display</td></tr>
+						<tr *ngFor="let element of sortedData">
+              <td class="text_center">{{element.ISDT}}</td>
+              <td>{{element.GIST}}</td>
+              <td class="text_right">{{element.PRERCP | number}}</td>
+              <td class="text_right">{{element.TAMT | number}}</td>
+              <td class="text_right">{{element.RCPAMT | number}}</td>
+						</tr>
+					</tbody>
+					<tfoot class="sum">
+						<tr>
+							<td colspan="2">합 계</td>
+							<td class="text_right">{{PRERCP | number}}</td>
+							<td class="text_right">{{TAMT | number}}</td>
+							<td class="text_right">{{RCPAMT | number}}</td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+</div>

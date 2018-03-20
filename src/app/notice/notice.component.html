@@ -1,0 +1,41 @@
+<div class="container">
+        <section class="row features">
+            <div class="col-md-12 media">
+                <div class="media-left">
+                    <div class="media-object">
+                        <i class="glyphicon glyphicon-bullhorn featureIcon text-primary"></i>
+                    </div>
+                </div>
+                <div class="media-body">
+                    <h4 class="media-heading">공지사항</h4>
+                    <p>notice</p>
+                </div>
+            </div>
+        </section>
+        <section class="row text-center">
+            <div class="col-md-12">
+                <div id="ctl00_ctl00_Content_MainContent_UpdatePanel1">
+                    <table class="table table-hover">
+                        <tbody>
+                           <tr *ngFor="let notice of notices">
+                              <td>
+                                  <table class="notice-content">
+                                      <tbody>
+                                        <tr>
+                                          <td class="title">{{ notice.GONGTITLE }}</td>
+                                          <td class="writetime">{{notice.GONGDATE}}</td>
+                                        </tr>
+                                        <tr *ngFor="let s of notice.GONGDETAIL.split('\r\n')">
+                                          <td colspan="2" class="content">
+                                               {{s}}
+                                          </td>
+                                        </tr>
+                                        </tbody></table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                      </table>
+             </div>
+          </div>
+      </section>
+    </div>

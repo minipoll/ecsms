@@ -1,0 +1,170 @@
+<div class="contents">
+				<h2>재고현황(1)</h2>
+				<div class="stock">
+					<table>
+						<tbody>
+							<tr>
+								<td class="text_right">조회기간 : </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dpFrom" [(ngModel)]="model.fromDt" name="fromDt" value="2017-11-20">
+                    <mat-datepicker-toggle matSuffix [for]="dpFrom"></mat-datepicker-toggle>
+                    <mat-datepicker #dpFrom></mat-datepicker>
+                  </mat-form-field>
+                </td>
+								<td class="text_right">수탁품명 : </td>
+								<td><mat-form-field><input size="9" matInput [(ngModel)]="model.goodn" name="goodn"></mat-form-field></td>
+								<td class="text_right">입고일자 : </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dp" [(ngModel)]="model.lotno1" name="lotno1">
+                    <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
+                    <mat-datepicker #dp></mat-datepicker>
+                  </mat-form-field>
+                </td>
+								<td class="text_right">재고수량=0 , 재고중량≠0 :</td>
+								<td>
+                  <mat-radio-group class="example-radio-group" [(ngModel)]="model.ent1" name="rdoEnt1">
+                    <mat-radio-button class="example-radio-button" *ngFor="let ent of ents1" [value]="ent.value">
+                      {{ent.viewValue}}
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </td>
+								<td rowspan="2"><a class="btn_st btn_search" (click)="getReport()">조 회</a></td>
+								<td rowspan="2"><a class="btn_st btn_print" (click)="openPrint()">출 력</a></td>
+								<td rowspan="2"><a class="btn_st btn_excel" (click)="exportExcel()">Excel</a></td>
+							</tr>
+							<tr>
+								<td class="text_right">~ </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dpTo" [(ngModel)]="model.toDt" name="toDt">
+                    <mat-datepicker-toggle matSuffix [for]="dpTo"></mat-datepicker-toggle>
+                    <mat-datepicker #dpTo></mat-datepicker>
+                  </mat-form-field>
+                </td>
+								<td class="text_right">B/L No. : </td>
+								<td><mat-form-field><input matInput [(ngModel)]="model.blno" name="blno"></mat-form-field></td>
+								<td class="text_right">원산지 : </td>
+								<td><mat-form-field><input matInput [(ngModel)]="model.org" name="org"></mat-form-field></td>
+								<td class="text_right">통관여부 :</td>
+								<td>
+                  <mat-radio-group class="example-radio-group" [(ngModel)]="model.ent2" name="rdoEnt2">
+                    <mat-radio-button class="example-radio-button" *ngFor="let ent of ents2" [value]="ent.value">
+                      {{ent.viewValue}}
+                    </mat-radio-button>
+                  </mat-radio-group>
+                </td>
+							</tr>
+						</tbody>
+					</table>
+        <!-- </form> -->
+				</div>
+
+				<!--result-->
+				<div class="result">
+				<h3 *ngIf="sortedData">{{sortedData.length}}건이 검색되었습니다.</h3>
+
+				<!--내용_반복-->
+				<table class="ttl cont" width="100%"><!-- 퍼센트 조절-->
+					<colgroup>
+						<col width="100px"/><!-- 수탁품명 -->
+						<col width="40px"/><!-- 규격 -->
+						<col width="40px"/><!-- 단위 -->
+						<col width="40px"/><!-- 전일 -->
+						<col width="40px"/><!-- 입고 -->
+						<col width="40px"/><!-- 출고 -->
+						<col width="40px"/><!-- 재고 -->
+						<col width="40px"/><!-- 전일 -->
+						<col width="40px"/><!-- 입고 -->
+						<col width="40px"/><!-- 출고 -->
+						<col width="40px"/><!-- 재고 -->
+						<col width="50px"/><!-- 입고일자 -->
+						<col width="40px"/><!-- Lot No -->
+						<col width="60px"/><!-- B/L No -->
+						<col width="30px"/><!-- 통관여부 -->
+						<col width="50px"/><!-- 통관일자 -->
+						<col width="50px"/><!-- 유효일자 -->
+						<col width="30px"/><!-- 잔여일수 -->
+						<col width="30px"/><!-- 원산지 -->
+						<col width="30px"/><!-- 가공공장 -->
+						<col width="30px"/><!-- 브랜드 -->
+						<col width="70px"/><!-- C/T No -->
+					</colgroup>
+          <thead class="ttl">
+						<tr>
+							<th rowspan="2">수탁품명</th>
+							<th rowspan="2">규격</th>
+							<th rowspan="2">단위</th>
+							<th colspan="4">재고수량</th>
+							<th colspan="4">재고중량</th>
+							<th rowspan="2">입고일자</th>
+							<th rowspan="2">Lot No</th>
+							<th rowspan="2">B/L No</th>
+							<th rowspan="2">통관<br/>여부</th>
+							<th rowspan="2">통관일자</th>
+							<th rowspan="2">유효일자</th>
+							<th rowspan="2">잔여<br/>일수</th>
+							<th rowspan="2">원산지</th>
+							<th rowspan="2">가공공장</th>
+							<th rowspan="2">브랜드</th>
+							<th rowspan="2">C/T No</th>
+						</tr>
+						<tr>
+							<th>전일.</th>
+							<th>입고.</th>
+							<th>출고.</th>
+							<th>재고.</th>
+							<th>전일.</th>
+							<th>입고</th>
+							<th>출고</th>
+							<th>재고</th>
+						</tr>
+					</thead>
+					<tbody class="cont">
+						<tr *ngIf="sortedData == null || sortedData.length == 0"><td colspan="22" class="text_center">No data to display</td></tr>
+						<tr *ngFor="let element of sortedData">
+							<td>{{element.GOODN}}</td>
+							<td>{{element.SIZE}}</td>
+							<td>{{element.UNIT}}</td>
+							<td class="text_right">{{element.BDAY_Q | number}}</td>
+							<td class="text_right">{{element.TDAY_IN_Q | number}}</td>
+							<td class="text_right">{{element.TDAY_OUT_Q | number}}</td>
+							<td class="text_right color1">{{element.INV_Q | number}}</td>
+							<td class="text_right">{{element.BDAY_W | number:'1.2-2'}}</td>
+							<td class="text_right">{{element.TDAY_IN_W | number:'1.2-2'}}</td>
+							<td class="text_right">{{element.TDAY_OUT_W | number:'1.2-2'}}</td>
+							<td class="text_right color2">{{element.INV_W | number:'1.2-2'}}</td>
+							<td class="text_center">{{element.LOTNO1}}</td>
+							<td>{{element.LOTNO2}}</td>
+							<td>{{element.BLNO}}</td>
+							<td><span [ngClass]="{red:element.ENTNM == '미통관' , blue:element.ENTNM == '부분통관'}">{{element.ENTNM}}</span></td>
+							<td class="text_center">{{element.ENTDATE}}</td>
+							<td class="text_center">{{element.EXPDATE_F}}</td>
+							<td class="text_right">{{element.EXP_DIFF}}</td>
+							<td>{{element.ORG}}</td>
+							<td>{{element.ESTNO}}</td>
+							<td>{{element.BRAND}}</td>
+							<td>{{element.CTNO}}</td>
+						</tr>
+					</tbody>
+					<tfoot class="sum">
+						<tr>
+							<td>&nbsp;</td>
+							<td>&nbsp;</td>
+							<td>&nbsp;</td>
+							<td class="text_right">{{BDAY_Q | number}}</td>
+							<td class="text_right">{{TDAY_IN_Q | number}}</td>
+							<td class="text_right">{{TDAY_OUT_Q | number}}</td>
+							<td class="text_right">{{INV_Q | number}}</td>
+							<td class="text_right">{{BDAY_W | number:'1.2-2'}}</td>
+							<td class="text_right">{{TDAY_IN_W | number:'1.2-2'}}</td>
+							<td class="text_right">{{TDAY_OUT_W | number:'1.2-2'}}</td>
+							<td class="text_right">{{INV_W | number:'1.2-2'}}</td>
+							<td colspan="11"></td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+
+</div>

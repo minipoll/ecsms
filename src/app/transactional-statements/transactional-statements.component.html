@@ -1,0 +1,22 @@
+<div class="contents">
+				<h2>거래명세서</h2>
+				<div class="stock">
+					<table>
+						<tbody>
+							<tr>
+								<td class="text_right">거래일자 : </td>
+								<td>
+                  <mat-form-field>
+                    <input matInput [matDatepicker]="dpFrom" [(ngModel)]="model.fromDt" name="fromDt" value="2017-11-20">
+                    <mat-datepicker-toggle matSuffix [for]="dpFrom"></mat-datepicker-toggle>
+                    <mat-datepicker #dpFrom></mat-datepicker>
+                  </mat-form-field>
+                </td>
+								<td><a class="btn_st btn_search" (click)="getReport()">조 회</a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div  [innerHTML]="innerHtml" class="result">
+				</div>
+</div>

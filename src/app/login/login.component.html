@@ -1,0 +1,35 @@
+<div class="contents">
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    class="login-form form-horizontal"
+  >
+    <div class="contentBox">
+      <h3 class="contentBoxTop">Login</h3>
+      <fieldset>
+        <div class="form-group" [ngClass]="{'has-error': formErrors.id}">
+          <label for="id" class="col-sm-3 control-label">ID</label>
+          <div class="col-sm-9">
+            <input class="form-control" type="text" formControlName="id" id="id" name="id" value="">
+            <span *ngIf="formErrors.id" class="help-block">{{formErrors.id}}</span>
+          </div>
+        </div>
+        <div class="form-group" [ngClass]="{'has-error': formErrors.pwd}">
+          <label for="pwd" class="col-sm-3 control-label">Password</label>
+          <div class="col-sm-9">
+            <input class="form-control" type="password" formControlName="pwd" id="pwd" name="pwd" value="">
+            <span *ngIf="formErrors.pwd" class="help-block">{{formErrors.pwd}}</span>
+          </div>
+        </div>
+      </fieldset>
+      <div *ngIf="errorResponse?.message" class="alert alert-danger">
+        {{errorResponse?.message}}
+      </div>
+    </div>
+    <div class="buttons">
+      <input class="btn btn-default" type="submit" value="Submit">
+    </div>
+  </form>
+
+</div>

@@ -1,0 +1,174 @@
+*
+{
+	font-size: 12px;
+	line-height: 1.4em;
+	font-family: "Malgun Gothic", "Dotum", Tahoma, Verdana, sans-serif;
+}
+body {
+	margin: 0;
+	padding: 0;
+
+}
+form {
+	margin: 0;
+	padding: 0;
+}
+hr {
+	display: none;
+}
+p, div, th, td, select, input {
+	color: #333;
+}
+a:link, a:visited {
+	color: #666;
+	text-decoration: none;
+}
+a:active, a:hover {
+	color: #000;
+	text-decoration: none;
+}
+a img,
+input.type-image {
+	border: 0 none;
+}
+input.type-text,
+textarea {
+	border: 1px solid #88a0bc;
+	background: #fff;
+	padding: 1px;
+}
+input.type-text:hover,
+input.type-text:focus,
+textarea:hover,
+textarea:focus,
+select:hover,
+select:active {
+	background-color: #ffd;
+}
+input, select, textarea {
+	vertical-align: middle;
+	font-size: 1em;
+	color: #333;
+}
+select {
+	font-size: 11px;
+	font-family: Dotum, "돋움", sans-serif;
+}
+span.button,
+img.button,
+a.button {
+	cursor: pointer;
+	vertical-align: middle;
+}
+ul li{list-style: none;}
+
+.stock button{
+	height: 30px;
+	vertical-align: middle;
+}
+.text_center{
+	text-align: center;;
+}
+
+/*main*/
+#wrapper{width: 100%; height: 100%; overflow-x: auto; white-space:nowrap; position: absolute; top: 0;	right: 0;}
+
+@media only screen and (max-width: 940px) {
+.navi{position: fixed; top: 0; height: 70px; border-bottom: 1px solid #c7c7c7; width: 100%; background-color: #fff; z-index: 5; white-space:nowrap;}
+.navi .logo{float: left; margin-left:5px; width: 100px;}
+.navi .logo a{text-decoration: none;}
+.navi .logo p.big{font-size: 2.1em; font-weight: 700; color: #bbb; letter-spacing: 0.07em;}
+.navi .logo p.small{font-size: 1em; font-weight: 700; color: #bbb; line-height: 0; letter-spacing: 0.07em;}
+
+.navi .menu{margin-left: 10px; margin-top: 10px; min-width: 800px; white-space:nowrap;}
+.navi .menu ul{ padding: 0; overflow: hidden; font-size:12px;}
+.navi .menu li{float: right;  margin: 8px 3px; border-right: 1px solid #c2c2c2; text-align: center; padding: 8px 8px 8px 0;}
+/* .navi .menu li:nth-child(7){border-right: none;} */
+.navi .menu li a{border:1px solid #fff; padding: 8px; font-size:12px;}
+.navi .menu li a:hover{background-color: #dcdcdc; border:1px solid #c2c2c2; padding: 8px;}
+.navi .menu p.login{ border: 1px solid #c2c2c2; border-radius: 3px; float: left; width: 40px; height: 33px; margin-top: 8px; position: relative;}
+.navi .menu p.login a{display: block; text-align: center; text-indent: -1000em; width: 40px; height: 33px;}
+.navi .menu p.login a:hover{background-color: #eee;}
+.navi .menu p.login a:after{content: ""; position: absolute; top: 8px; left: 12px;background: url(/assets/image/icons.png) no-repeat; background-position: 0 0; width: 17px; height: 15px;}
+}
+
+@media only screen and (min-width: 940px) {
+.navi{position: fixed; top: 0; height: 70px; border-bottom: 1px solid #c7c7c7; width: 100%; background-color: #fff; z-index: 5;}
+.navi .logo{float: left; margin-left: 20px; width: 110px;}
+.navi .logo a{text-decoration: none;}
+.navi .logo p.big{font-size: 2.1em; font-weight: 700; color: #bbb; letter-spacing: 0.07em;}
+.navi .logo p.small{font-size: 1em; font-weight: 700; color: #bbb; line-height: 0; letter-spacing: 0.07em;}
+
+.navi .menu{float: right; font-size: 1.2em; width: 845px; margin-top: 10px;}
+.navi .menu ul{ padding: 0; overflow: hidden; font-size:14px;  margin: 0;}
+.navi .menu li{float: right;  margin: 8px 3px; border-right: 1px solid #c2c2c2; text-align: center; padding: 8px 10px 8px 0;}
+/* .navi .menu li:nth-child(10){border-right: none;} */
+.navi .menu li a{border:1px solid #fff; padding: 8px; font-size:14px;}
+.navi .menu li a:hover{background-color: #dcdcdc; border:1px solid #c2c2c2; padding: 8px;}
+.navi .menu p.login{ border: 1px solid #c2c2c2; border-radius: 3px; float: left; width: 40px; height: 33px; margin-top: 8px; position: relative;}
+.navi .menu p.login a{display: block; text-align: center; text-indent: -1000em; width: 40px; height: 33px;}
+.navi .menu p.login a:hover{background-color: #eee;}
+.navi .menu p.login a:after{content: ""; position: absolute; top: 8px; left: 12px;background: url(/assets/image/icons.png) no-repeat; background-position: 0 0; width: 17px; height: 15px;}
+}
+
+.contents .outbox , .outbox_result{border: solid 1px #e5eff9 ;padding: 2px;}
+.contents .outbox_result{border: solid 1px #e5eff9 ;margin-top: 10px;}
+.contents{position: relative; margin-top: 70px; clear: both; padding: 0 15px; margin-bottom: 20px; width: 100%; min-width: 1400px; min-height: 320px;}
+.contents h2{font-size: 1.6em; color: #333; padding-left: 25px; padding-top: 8px;}
+.contents h2:before{content: ""; position: absolute; top: 12px; left: 15px; background: url(/assets/image/icons.png) no-repeat; background-position: -61px 0; width: 20px; height: 15px;}
+.contents .stock{ position: relative; white-space: nowrap; min-width: 1000px;}
+
+.contents .stock table{overflow: hidden;}
+.contents .stock table td{color: #666; padding-right: 10px;}
+.contents .stock table td.text_right,
+.contents .result .cont td.text_right,
+.contents .result .sum td{text-align: right;}
+.contents .stock p{margin: 0; padding: 0;}
+.contents .stock .input_st{height: 20px; border:1px solid #88a0bc; padding: 0 3px; display: inline-block; width: 80px;}
+.contents .stock .btn_date{background-color: #c8d7ea; color: #52607d; cursor: pointer; margin-left: -1px; padding: 0 8px;}
+.contents .stock .btn_ico{background: url(/assets/image/icons.png) no-repeat; background-position: -51px 0; width: 10px; display: block; text-indent: -1000em; margin-top: -1px; }
+.contents .stock .unselect{width: 180px;}
+
+.contents .stock a.btn_st{text-align: center;padding: 5px; border-radius: 3px; display: block; color: #fff; position: relative; font-size: 1.0em; width: 70px;}
+
+.contents .stock a.btn_search{ background-color: #5db75d; border: 1px solid #4dae4d;}
+.contents .stock a.btn_search:hover{background-color: #449d44; border: 1px solid #398439;}
+
+.contents .stock a.btn_save{ background-color: #0099ff; border: 1px solid #008ae6;}
+.contents .stock a.btn_save:hover{background-color: #007acc; border: 1px solid #006bb3;}
+
+.contents .stock a.btn_print{ background-color: #efad4d; border: 1px solid #eea135;}
+.contents .stock a.btn_print:hover{ background-color: #ec971f; border: 1px solid #d58512;}
+
+.contents .stock a.btn_excel{ background-color: #ff3399; border: 1px solid #ff1a8c;}
+.contents .stock a.btn_excel:hover{ background-color: #ff0080; border: 1px solid #e60073;}
+
+.contents .result {position: relative; overflow: hidden;margin-top:10px;}
+.contents .result h3{font-size: 0.9em; padding-left: 20px; margin-top: 2px;margin-bottom: 2px}
+.contents .result h3:before{content: ""; position: absolute; top: 2px; left: 1px; background: url(/assets/image/icons.png) no-repeat; background-position: -81px 0; width: 15px; height: 15px;}
+
+.contents .outbox .result .ttl ,
+.contents .outbox_result .result .cont ,
+.contents .result .ttl ,
+.contents .result .cont{height: auto; background-color:#fff; border-collapse: collapse;}
+.contents .result .ttl th{border:1px solid #8ba0bb; text-align: center; color: #1f395a; padding: 3px 0; white-space: pre-wrap; font-weight: normal; background-color: #e5eff9; font-size: 0.9em;}
+.contents .result .cont td{border:1px solid #cedeee; color: #000; padding: 5px 3px; white-space: pre-wrap; font-weight: normal; background-color: #fff; border-top: none; font-size: 0.9em;}
+.contents .result .cont td.color1{background-color: #FFEFD5;} /*td색상*/
+.contents .result .cont td.color2{background-color: #FFFFCC;} /*td색상*/
+.contents .result .cont td span.red{color:#ff0000;}  /*미통관_빨강*/
+.contents .result .cont td span.blue{color:#0000ff;}  /*부분통관_파랑*/
+.contents .result .cont td:first-child{border-left:1px solid #8ba0bb ;}
+.contents .result .cont td:last-child{border-right:1px solid #8ba0bb ;}
+.contents .result .cont tr:last-child td{border-bottom:1px solid #8ba0bb ;}
+
+
+.gegun{border: 1px solid #ddd; width:20px; height:20px;}
+.gegun:hover {
+    box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
+}
+
+/* .contents .result .sum td{border-bottom:1px solid #8ba0bb; color: #800000; padding: 5px 3px; white-space: pre-wrap; font-weight: normal; background-color: #e5eff9; font-size: 0.9em;} */
+.contents .result .sum td{border-bottom:1px solid #8ba0bb;color: #800000; padding: 5px 3px; background-color: #e5eff9; font-size: 0.9em;}
+.contents .result .sum{border-bottom:1px solid #8ba0bb; white-space: pre-wrap; font-weight: normal;}
+
+.algin_table{max-width: 1300px; overflow: hidden; position: relative; left: 20%;}

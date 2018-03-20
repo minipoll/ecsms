@@ -1,0 +1,46 @@
+<div id="wrapper">
+  <div class="navi">
+  		<div class="logo">
+  			<a href="/">
+  			<p class="big">{{shop}}</p>
+  			<p *ngIf="co" class="small">{{co}}</p>
+  			</a>
+  		</div>
+  		<div class="menu">
+        <ul>
+          <li *ngIf="authService.isLoggedIn()">
+            <button type="button" (click)="authService.logout()">Logout</button>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','request-release']" (click)="seledtedIndex = 6" [ngClass]="{current:seledtedIndex == 6}">출고요청</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','transactional-statements']" (click)="seledtedIndex = 5" [ngClass]="{current:seledtedIndex == 5}">거래명세서</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','transactional-report']" (click)="seledtedIndex = 4" [ngClass]="{current:seledtedIndex == 4}">거래내역</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','invoice-report']" (click)="seledtedIndex = 3" [ngClass]="{current:seledtedIndex == 3}">입출내역</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','inventory-report2']" (click)="seledtedIndex = 2" [ngClass]="{current:seledtedIndex == 2}">재고현황(2)</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','report','inventory-report1']" (click)="seledtedIndex = 1" [ngClass]="{current:seledtedIndex == 1}">재고현황(1)</a>
+          </li>
+          <li *ngIf="authService.isLoggedIn()" [routerLinkActive]="['active']" >
+            <a [routerLink]="['/','notice']" (click)="seledtedIndex = 0" [ngClass]="{current:seledtedIndex == 0}">공지사항</a>
+          </li>
+           <li  *ngIf="!authService.isLoggedIn()" [routerLinkActive]="['active']">
+            <a [routerLink]="['/','login']">로그인</a>
+           </li>
+           <!-- <p class="login"><a href="/">로그인</a></p> -->
+         </ul>
+  		</div>
+  </div>
+
+
+<router-outlet></router-outlet>
+
+</div>

@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<query>
+  <shopSql>
+  SELECT CO
+        , CONCAT(LEFT(CRNO, 3) , '-' , SUBSTRING(CRNO, 4, 2) , '-' , RIGHT(CRNO, 5)) AS CRNO
+        , CHIEF
+        , ADDR
+        , UT
+        , JM
+   FROM S99
+  WHERE NO = (SELECT MAX(NO) FROM S99)
+</shopSql>
+
+  <loginSql>
+      SELECT ID,CO,CUST
+        FROM M05
+       WHERE ID = @id
+         AND PWD = @pwd
+  </loginSql>
+
+  <refreshSql>
+      SELECT ID,CO,CUST
+        FROM M05
+       WHERE ID = @id
+  </refreshSql>
+
+  <noticeSql>
+    SELECT GONGTITLE
+          ,GONGDETAIL
+          ,DATE_FORMAT(GONGDATE,'%Y-%m-%d %p %l:%i:%s') AS GONGDATE
+      FROM M10
+  ORDER BY GONGDATE DESC
+ </noticeSql>
+
+ <inventorySql>
+   SELECT  GOODN
+   , SIZE
+   , UNIT
+   , IFNULL(BDAY_Q ,0) AS BDAY_Q
+   , IFNULL(BDAY_W ,0) AS BDAY_W
+   , IFNULL(TDAY_IN_Q ,0) AS TDAY_IN_Q
+   , IFNULL(TDAY_IN_W ,0) AS TDAY_IN_W
+   , IFNULL(TDAY_OUT_Q ,0) AS TDAY_OUT_Q
+   , IFNULL(TDAY_OUT_W ,0) AS TDAY_OUT_W
+   , IFNULL(INV_Q ,0) AS INV_Q
+   , IFNULL(INV_W ,0) AS INV_W
+   , DATE_FORMAT(LOTNO1,'%Y-%m-%d') AS LOTNO1
+   , LOTNO2
+   , BLNO
+   , CASE WHEN ENTYN = '2'                   THEN '통관'
+         WHEN ENTYN = '1' AND ENTDATE != '' THEN '부분통관'
+         WHEN ENTYN = '1'                   THEN '미통관'
+         ELSE ''    END AS ENTNM
+   , DATE_FORMAT(ENTDATE,'%Y-%m-%d') AS ENTDATE
+   , DATE_FORMAT(PRODATE_F,'%Y-%m-%d') AS PRODATE_F
+   , DATE_FORMAT(EXPDATE_F,'%Y-%m-%d') AS EXPDATE_F
+   , DATEDIFF(EXPDATE_F,CURRENT_DATE) AS EXP_DIFF
+   , ORG
+   , ESTNO
+   , BRAND
+   , CTNO
+FROM ( SELECT CUST
+            , GOOD
+            , GOODN
+            , LOTNO1
+            , LOTNO2
+            , ESTNO
+            , CTNO
+            , BLNO
+            , BRAND
+            , SIZE
+            , UNIT
+            , (SELECT IFNULL(MAX(ENTYN),0) FROM S23 WHERE CUST = T.CUST AND GOOD = T.GOOD AND LOTNO1 = T.LOTNO1 AND LOTNO2 = T.LOTNO2 AND BLNO = T.BLNO) AS ENTYN       -- 통관여부
+            , (SELECT MAX(ENTDATE)         FROM S23 WHERE CUST = T.CUST AND GOOD = T.GOOD AND LOTNO1 = T.LOTNO1 AND LOTNO2 = T.LOTNO2 AND BLNO = T.BLNO) AS ENTDATE     -- 통관일자
+            , (SELECT MAX(PRODATE_F)       FROM S23 WHERE CUST = T.CUST AND GOOD = T.GOOD AND LOTNO1 = T.LOTNO1 AND LOTNO2 = T.LOTNO2 AND BLNO = T.BLNO) AS PRODATE_F   -- 가공일자
+            , (SELECT MAX(EXPDATE_F)       FROM S23 WHERE CUST = T.CUST AND GOOD = T.GOOD AND LOTNO1 = T.LOTNO1 AND LOTNO2 = T.LOTNO2 AND BLNO = T.BLNO) AS EXPDATE_F   -- 유효일자
+            , (SELECT MAX(ORG)             FROM S23 WHERE CUST = T.CUST AND GOOD = T.GOOD AND LOTNO1 = T.LOTNO1 AND LOTNO2 = T.LOTNO2 AND BLNO = T.BLNO) AS ORG         -- 원산지
+            , IFNULL(BSTOCK_Q, 0) AS BDAY_Q       -- 전일재고수량
+            , IFNULL(BSTOCK_W, 0) AS BDAY_W       -- 전일재고중량
+            , IFNULL(IN_Q, 0)     AS TDAY_IN_Q    -- 입고수량
+            , IFNULL(IN_W, 0)     AS TDAY_IN_W    -- 입고중량
+            , IFNULL(OUT_Q, 0)    AS TDAY_OUT_Q   -- 출고수량
+            , IFNULL(OUT_W, 0)    AS TDAY_OUT_W   -- 출고중량
+            , IFNULL(BSTOCK_Q, 0) + IFNULL(IN_Q, 0) - IFNULL(OUT_Q, 0) AS INV_Q -- 재고수량
+            , IFNULL(BSTOCK_W, 0) + IFNULL(IN_W, 0) - IFNULL(OUT_W, 0) AS INV_W -- 재고중량
+         FROM ( SELECT CUST, GOOD, GOODN, LOTNO1, LOTNO2, ESTNO, CTNO, BLNO, BRAND, SIZE, UNIT
+                     , SUM(BSTOCK_Q)	AS BSTOCK_Q
+                     , SUM(BSTOCK_W)	AS BSTOCK_W
+                     , SUM(IN_Q)	    AS IN_Q
+                     , SUM(IN_W)	    AS IN_W
+                     , SUM(OUT_Q)	    AS OUT_Q
+                     , SUM(OUT_W)	    AS OUT_W
+                  FROM (
+                         -- 이월재고(기초재고)
+                         SELECT T1.CUST
+                              , T1.GOOD
+                              , T2.GOODN
+                              , T1.LOTNO1
+                              , T1.LOTNO2
+                              , T1.ESTNO
+                              , T1.CTNO
+                              , T1.BLNO
+                              , T1.BRAND
+                              , T2.SIZE
+                              , T2.UNIT
+                              , T1.LIVQ AS BSTOCK_Q
+                              , T1.LIVW AS BSTOCK_W
+                              , 0       AS IN_Q
+                              , 0       AS IN_W
+                              , 0       AS OUT_Q
+                              , 0       AS OUT_W
+                           FROM S24 T1
+                               ,S03 T2
+                          WHERE T1.CUST = T2.CUST
+                            AND T1.GOOD = T2.GOOD
+                            AND T1.CUST = @cust
+                            AND T1.Y4 = LEFT(@fromDt, 4)
+                            AND T2.GOODN LIKE CONCAT('%' , @goodn , '%')
+                            AND T1.LOTNO1 LIKE CONCAT('%', @lotno1, '%')
+                          UNION ALL
+
+                         -- 전일재고
+                         SELECT T1.CUST
+                              , T1.GOOD
+                              , T2.GOODN
+                              , T1.LOTNO1
+                              , T1.LOTNO2
+                              , T1.ESTNO
+                              , T1.CTNO
+                              , T1.BLNO
+                              , T1.BRAND
+                              , T2.SIZE
+                              , T2.UNIT
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '1' THEN T1.IO_Q
+                                     ELSE T1.IO_Q * -1
+                                      END AS BSTOCK_Q
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '1' THEN T1.IO_W
+                                     ELSE T1.IO_W * -1
+                                      END AS BSTOCK_W
+                              , 0 AS IN_Q
+                              , 0 AS IN_W
+                              , 0 AS OUT_Q
+                              , 0 AS OUT_W
+                          FROM S32D T1
+                             , S03 AS T2
+                         WHERE T1.CUST = T2.CUST
+                           AND T1.GOOD = T2.GOOD
+                           AND T1.CUST = @cust
+                           AND T1.IODT &gt;= CONCAT(LEFT(@fromDt, 4) , '0101')
+                           AND T1.IODT &lt;  @toDt
+                           AND T1.GUBN IN ('11', '12', '21', '22', '24')    -- 11:입고, 12:이체, 13:이고, 21:출고, 22:이체, 23:이고, 24:증감량조정
+                           AND T2.GOODN LIKE CONCAT('%' , @goodn , '%')
+                           AND T1.LOTNO1 LIKE CONCAT('%', @lotno1, '%')
+                         UNION ALL
+
+                         -- 기간 내 입고, 출고
+                         SELECT T1.CUST
+                              , T1.GOOD
+                              , T2.GOODN
+                              , T1.LOTNO1
+                              , T1.LOTNO2
+                              , T1.ESTNO
+                              , T1.CTNO
+                              , T1.BLNO
+                              , T1.BRAND
+                              , T2.SIZE
+                              , T2.UNIT
+                              , 0 AS BSTOCK_Q
+                              , 0 AS BSTOCK_W
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '1' THEN T1.IO_Q
+                                     ELSE 0
+                                     END AS IN_Q
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '1' THEN T1.IO_W
+                                     ELSE 0
+                                     END AS IN_W
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '2' THEN T1.IO_Q
+                                     ELSE 0
+                                     END AS OUT_Q
+                              , CASE WHEN LEFT(T1.GUBN, 1) = '2' THEN T1.IO_W
+                                     ELSE 0
+                                      END AS OUT_W
+                           FROM S32D T1
+                               ,S03 AS T2
+                          WHERE T1.CUST = T2.CUST
+                            AND T1.GOOD = T2.GOOD
+                            AND T1.CUST = @cust
+                            AND T1.IODT BETWEEN @fromDt AND @toDt
+                            AND T1.GUBN IN ('11', '12', '21', '22', '24')    -- 11:입고, 12:이체, 13:이고, 21:출고, 22:이체, 23:이고, 24:증감량조정
+                            AND T2.GOODN LIKE CONCAT('%' ,@goodn ,'%')
+                            AND T1.LOTNO1 LIKE CONCAT('%', @lotno1, '%')
+                       ) AS T
+                  GROUP BY CUST, GOOD, GOODN, LOTNO1, LOTNO2, ESTNO, CTNO, BLNO, BRAND, SIZE, UNIT
+                ) AS T
+    WHERE BLNO LIKE CONCAT('%' , @blno ,'%')
+      AND NOT(BSTOCK_Q  = 0
+      AND BSTOCK_W   = 0
+      AND IN_Q  = 0
+      AND IN_W  = 0
+      AND OUT_Q = 0
+      AND OUT_W = 0)
+   ) AS T
+WHERE ORG LIKE CONCAT('%' , @org , '%')
+-- AND NOT((BDAY_Q + TDAY_IN_Q - TDAY_OUT_Q) = 0 AND (BDAY_W + TDAY_IN_W - TDAY_OUT_W) = 0)
+AND 1 = (CASE @ent2 WHEN '0'  THEN 1
+                    WHEN '3' THEN CASE WHEN ENTYN = '1' AND RTRIM(ENTDATE) != '' THEN 1
+                                       ELSE 0 END
+                    ELSE          CASE WHEN ENTYN = @ent2 THEN 1 ELSE 0 END
+              END)
+AND 1 = (CASE @ent1 WHEN '0'  THEN 1
+                    WHEN '1' THEN CASE WHEN NOT((BDAY_Q + TDAY_IN_Q - TDAY_OUT_Q) = 0
+                                           AND (BDAY_W + TDAY_IN_W - TDAY_OUT_W) != 0) THEN 1
+                                       ELSE 0 END
+                    WHEN '2' THEN CASE WHEN (BDAY_Q + TDAY_IN_Q - TDAY_OUT_Q) = 0
+                                              AND (BDAY_W + TDAY_IN_W - TDAY_OUT_W) != 0 THEN 1
+                                       ELSE 0 END
+              END)
+ORDER BY GOODN, SIZE, UNIT ASC
+ </inventorySql>
+
+ <invoiceSql>
+   SELECT A.URNO
+        , A.GUBN
+        , A.SRNO
+        , A.SQNO
+        , DATE_FORMAT(A.IODT,'%Y-%m-%d') AS IO_DT
+        , B.GOODN
+        , B.SIZE
+        , B.UNIT
+        , A.GUBN
+        , CASE A.GUBN WHEN 11 THEN '입고'
+                    WHEN 12 THEN '이입'
+                    WHEN 21 THEN '출고'
+                    WHEN 22 THEN '이출'
+                       ELSE ''
+          END AS GUBN_M
+        , IFNULL(A.IO_Q,0) AS IO_Q
+        , IFNULL(A.IO_W,0) AS IO_W
+        , IFNULL(D.WT_Q,0) AS WT_Q
+        , IFNULL(D.S47_CNT,0) AS S47_CNT
+        , DATE_FORMAT(A.LOTNO1,'%Y-%m-%d') AS LOTNO1
+        , A.LOTNO2
+        , A.BLNO
+        , DATE_FORMAT(A.IODT,'%Y-%m-%d') AS IODT
+        , DATE_FORMAT(A.PRODATE_F,'%Y-%m-%d') AS PRODATE_F
+        , DATE_FORMAT(A.EXPDATE_F,'%Y-%m-%d') AS EXPDATE_F
+        , C.SEND
+        , A.WTYN
+        , (SELECT ORG
+              FROM S23
+             WHERE CUST   = A.CUST
+               AND GOOD   = A.GOOD
+               AND LOTNO1 = A.LOTNO1
+               AND LOTNO2 = A.LOTNO2
+               AND BLNO   = A.BLNO) AS ORG
+        , CASE A.CUST_S WHEN 0 THEN ''
+                        ELSE (SELECT CO FROM S01 WHERE CUST = A.CUST_S LIMIT 1)
+          END AS CUST_S
+        , A.CTNO
+        , A.BRAND
+        , A.GRADE
+        , A.ESTNO
+        , D.KEY_G
+        , (SELECT CO
+              FROM M05
+             WHERE CUST = A.CUST LIMIT 1) AS CUSTNAME
+        , (SELECT SALE_CTRL
+              FROM M05
+             WHERE CUST = A.CUST LIMIT 1) AS SALE_CTRL
+       FROM S32D A JOIN S03 B
+         ON A.CUST = B.CUST
+        AND A.GOOD = B.GOOD
+       JOIN S32H C
+         ON A.IODT = C.IODT
+        AND A.URNO = C.URNO
+        AND A.GUBN = C.GUBN
+        AND A.SRNO = C.SRNO
+           LEFT OUTER JOIN ( SELECT KEY_G,SUM(S47.WEIGHT) AS WT_Q ,COUNT(*) AS S47_CNT
+                               FROM S47
+                           GROUP BY KEY_G) D
+         ON D.KEY_G = CONCAT(A.IODT , LPAD(A.URNO,2,'0') , LPAD(A.SRNO,4,'0') , LPAD(A.SQNO,2,'0') , A.GUBN)
+      WHERE A.CUST = @cust
+        AND A.IODT BETWEEN @fromDt AND @toDt
+        AND A.GUBN IN(11,12,21,22)
+        AND 1 = (CASE WHEN @ent2 = '0' THEN 1
+                ELSE CASE WHEN A.GUBN = @ent2 THEN 1
+                    ELSE 0
+                 END
+           END)
+        AND B.GOODN  LIKE CONCAT('%' , @goodn , '%')
+        AND A.BLNO   LIKE CONCAT('%' , @blno  , '%')
+        AND A.ORG    LIKE CONCAT('%' , @org , '%')
+        AND C.SEND   LIKE CONCAT('%' , @send , '%')
+      ORDER BY A.IODT, A.GUBN, A.URNO, A.SRNO, A.SQNO ASC
+ </invoiceSql>
+
+ <invoiceGegunHeaderSql>
+ SELECT CONCAT(DATE_FORMAT(A.IODT,'%Y.%m.%d'),' ', LPAD(A.URNO,2,'0'),'-' , LPAD(A.SRNO,4,'0'),'-' , LPAD(A.SQNO,2,'0')) AS KEYG
+      , (SELECT USERNAME FROM S05 WHERE USERID = (SELECT UPUR FROM S46 WHERE KEY_G = @keyG limit 1)) AS EMPLOYEE
+      , B.SEND
+      , (SELECT GOODN FROM S03
+          WHERE CUST = A.CUST
+            AND GOOD = A.GOOD limit 1) AS GOODN
+      , (SELECT UNIT FROM S03
+          WHERE CUST = A.CUST
+            AND GOOD = A.GOOD limit 1) AS UNIT
+      , A.BLNO
+      , A.ESTNO
+      , A.ORG
+      , A.CTNO
+      , A.BRAND
+      , IFNULL((SELECT IO_Q FROM S46 WHERE KEY_G = @keyG limit 1),0) AS IO_Q
+      , IFNULL((SELECT IO_W FROM S46 WHERE KEY_G = @keyG limit 1),0) AS IO_W
+      , IFNULL((SELECT WGTGB FROM S47 WHERE KEY_G = @keyG limit 1),0) AS WGTGB
+      , IFNULL((SELECT SUM(WEIGHT_1) FROM S47 WHERE KEY_G  = @keyG),0) AS WEIGHT_1
+      , C.CO AS CUST_NM
+      , C.FAX
+   FROM S32D AS A JOIN S32H AS B
+     ON A.IODT = B.IODT
+    AND A.URNO = B.URNO
+    AND A.GUBN = B.GUBN
+    AND A.SRNO = B.SRNO
+        JOIN S01 C
+     ON A.CUST = C.CUST
+  WHERE A.IODT = SUBSTRING(@keyG,1,8)
+    AND A.URNO = CAST(SUBSTRING(@keyG,9,2) AS INT)
+    AND A.SRNO = CAST(SUBSTRING(@keyG,11,4) AS INT)
+    AND A.SQNO = CAST(SUBSTRING(@keyG,15,2) AS INT)
+    AND A.GUBN = SUBSTRING(@keyG,17,2)
+ </invoiceGegunHeaderSql>
+
+ <invoiceGegunDetailSql>
+   SELECT FLOOR((SEQNO-1)/4) AS ROWNO,SEQNO, WEIGHT, WEIGHT_1, WGTGB, (CASE WHEN SCAN_YN = 'N' THEN 'V' ELSE '' END) AS SACN_YN, BARCODE
+     FROM S47
+    WHERE KEY_G = @keyG
+ ORDER BY SEQNO ASC
+ </invoiceGegunDetailSql>
+
+   <transactionalReportSql>
+     SELECT A.CUST
+          , B.CO
+          , DATE_FORMAT(A.ISDT,'%Y-%m-%d') AS ISDT
+          , A.GIST
+          , IFNULL(A.PRERCP,0) AS PRERCP
+          , IFNULL(A.TAMT,0) AS TAMT
+          , IFNULL(A.RCPAMT,0) AS RCPAMT
+       FROM (
+                 SELECT CUST
+                      , DATE_ADD(STR_TO_DATE(@fromDt,'%Y%m%d'), INTERVAL -1 DAY) AS ISDT
+                      , '[전기이월미수]' AS GIST
+                      , SUM(UN_AMOT_S12) + SUM(UN_AMOT_S82) - SUM(UN_AMOT_S36) AS PRERCP
+                      , 0 AS TAMT
+                      , 0 AS RCPAMT
+                   FROM (
+                             SELECT CUST
+                                  , LRCV AS UN_AMOT_S12
+                                  , 0    AS UN_AMOT_S82
+                                  , 0    AS UN_AMOT_S36
+                               FROM S12
+                              WHERE Y4 = LEFT(@fromDt, 4)
+                                AND CUST LIKE @CUST
+                             UNION ALL
+                             SELECT CUST
+                                  , 0    AS UN_AMOT_S12
+                                  , TAMT AS UN_AMOT_S82
+                                  , 0    AS UN_AMOT_S36
+                               FROM S82
+                              WHERE CUST LIKE @CUST
+                                AND ISDT &gt;= CONCAT(LEFT(@fromDt, 4) , '0101')
+                                AND ISDT &lt;  @fromDt
+                             UNION ALL
+                             SELECT CUST
+                                  , 0      AS UN_AMOT_S12
+                                  , 0      AS UN_AMOT_S82
+                                  , RCPAMT AS UN_AMOT_S36
+                               FROM S36
+                              WHERE GUBN = '81'
+                                AND CUST LIKE @cust
+                                AND WKDT &gt;= CONCAT(LEFT(@fromDt, 4) , '0101')
+                                AND WKDT &lt;  @fromDt
+                        ) AS UN1
+                  GROUP BY UN1.CUST
+                 UNION ALL
+                 SELECT CUST
+                      , ISDT
+                      , CONCAT('[매출]',RMK) AS GIST
+                      , 0              AS PRERCP
+                      , TAMT           AS TAMT
+                      , 0              AS RCPAMT
+                   FROM S82
+                  WHERE CUST LIKE @cust
+                    AND ISDT BETWEEN @fromDt AND @toDt
+                 UNION ALL
+                 SELECT CUST
+                      , WKDT            AS ISDT
+                      , CONCAT('[입금]',GIST) AS GIST
+                      , 0               AS PRERCP
+                      , 0               AS TAMT
+                      , RCPAMT          AS RCPAMT
+                   FROM S36
+                  WHERE GUBN = '81'
+                    AND CUST LIKE @cust
+                    AND WKDT BETWEEN @fromDt AND @toDt
+            ) AS A INNER JOIN S01 AS B
+         ON A.CUST = B.CUST
+      ORDER BY A.ISDT
+   </transactionalReportSql>
+
+
+ <transactionalStatementsHeaderSql>
+   SELECT CO
+     , CONCAT(LEFT(CRNO, 3) , '-' , SUBSTRING(CRNO, 4, 2) , '-' , RIGHT(CRNO, 5)) AS CRNO
+     , CHIEF
+     , ADDR
+     , UT
+     , JM
+     , (SELECT CO FROM S01 WHERE CUST = @cust) AS CUSTNAME
+     , DATE_FORMAT(@fromDt,'%Y년  %m월 %d일') AS DEALDATE
+     , BANK_1  AS BANK_NAME
+     , ACCNO_1 AS BANK_ACC
+     , -- 전일미수
+      IFNULL((SELECT SUM(LRCV) FROM S12 WHERE CUST = @cust AND Y4 = LEFT(@fromDt, 4)), 0)	-- 전년미수
+	     + IFNULL((SELECT SUM(TAMT) FROM S82 WHERE CUST = @cust AND ISDT LIKE CONCAT(LEFT(@fromDt, 4) , '%') AND ISDT &lt;= @fromDt), 0) -- 매출
+	     - IFNULL((SELECT SUM(RCPAMT) FROM S36 WHERE CUST = @cust AND WKDT LIKE CONCAT(LEFT(@fromDt, 4) , '%') AND WKDT &lt;= @fromDt), 0) -- 입금
+	     AS MISU_TOTAL
+  FROM S99
+ WHERE NO = (SELECT MAX(NO) FROM S99)
+
+</transactionalStatementsHeaderSql>
+
+   <transactionalStatementsDetailSql>
+     SELECT A.INDATE, A.CUST, A.GOOD, A.GOODN, IFNULL(A.UNIT_PRICE,0) AS UNIT_PRICE, IFNULL(A.TOTE_PRICE,0) AS TOTE_PRICE
+          , IFNULL(A.FREEZE_PRICE,0) AS FREEZE_PRICE  ,IFNULL(A.WORK_PRICE,0) AS WORK_PRICE
+          , B.YEAR, B.MONTH, B.DAY, B.GIST1, B.GIST2, B.INQ, B.INW, B.OTQ, B.OTW, B.IVQ, B.IVW, B.CALCQ, B.CALCW, B.TERM
+          , B.TF_Q, B.TF_W, IFNULL(B.RFAMT,0) AS RFAMT, IFNULL(B.LDAMT,0) AS LDAMT, IFNULL(B.FZAMT,0) AS FZAMT, IFNULL(B.WKAMT,0) AS WKAMT
+  FROM (
+             SELECT A.INDATE
+                  , A.CUST
+                  , A.GOOD
+                  , A.GOODN
+                  , MAX(A.RFUP) AS UNIT_PRICE
+                  , MAX(A.LIUP + A.LOUP) AS TOTE_PRICE
+                  , MAX(A.FZUP) AS FREEZE_PRICE
+                  , MAX(A.WKUP) AS WORK_PRICE
+               FROM S33 AS A JOIN S01 AS B
+                 ON A.CUST   = B.CUST
+              WHERE A.INDATE = @fromDt
+                AND A.CUST = @cust
+              GROUP BY A.INDATE, A.CUST, A.GOOD, A.GOODN ) AS A
+  JOIN (
+             SELECT A.INDATE
+                  , A.CUST
+                  , A.GOOD
+                  , A.GOODN
+                  , LEFT(A.DATE, 4) AS YEAR
+                  , SUBSTRING(A.DATE, 5, 2) AS MONTH
+                  , SUBSTRING(A.DATE, 7, 2) AS DAY
+                  , A.GIST1
+                  , A.GIST2
+                  , A.INQ
+                  , A.OTQ
+                  , A.IVQ
+                  , A.CALQ AS CALCQ
+                  , A.INW
+                  , A.OTW
+                  , A.IVW
+                  , A.CALW AS CALCW
+                  , A.TERM
+                  , A.TF_Q
+                  , A.TF_W
+                  , A.RFAMT
+                  , A.LDAMT
+                  , A.FZAMT
+                  , (A.WKAMT + A.UDAMT + A.O1AMT + A.O2AMT + A.WTAMT) AS WKAMT
+               FROM S33 AS A JOIN S01 AS B
+                 ON A.CUST   = B.CUST
+              WHERE A.INDATE = @fromDt
+                AND A.CUST = @cust   ) AS B
+    ON A.INDATE = B.INDATE
+   AND A.CUST   = B.CUST
+   AND A.GOOD   = B.GOOD
+ ORDER BY A.GOOD, B.YEAR, B.MONTH, B.DAY ASC
+
+</transactionalStatementsDetailSql>
+
+   <clsYmdSql>
+      SELECT CLSYMD
+        FROM S01
+       WHERE CUST = @cust
+   </clsYmdSql>
+
+   <requestReleaseSql>
+     SELECT X.SEQNO
+          , X.CUST
+          , X.CUST2
+          , X.CO2
+          , X.GOOD
+          , X.GOODN
+          , X.GOODE
+          , X.SIZE
+          , X.MARK
+          , X.UNIT
+          , X.WGT
+          , X.TYPE
+          , IFNULL(X.CALQW,0) AS CALQW
+          , X.RMNO
+          , DATE_FORMAT(X.LOTNO1,'%Y-%m-%d') AS LOTNO1
+          , X.LOTNO2
+          , X.BLNO
+          , X.CTNO
+          , X.BRAND
+          , X.GRADE
+          , X.ESTNO
+          , DATE_FORMAT(X.PRODATE_F,'%Y-%m-%d') AS PRODATE_F
+          , DATE_FORMAT(X.EXPDATE_F,'%Y-%m-%d') AS EXPDATE_F
+          , CASE WHEN X.ENTYN = 1
+                  AND IFNULL(X.ENTQ, 0) = 0 THEN '미통관'
+                 WHEN X.ENTYN = 1
+                  AND IFNULL(X.ENTQ, 0) > 0 THEN '부분통관'
+                 WHEN X.ENTYN = 2 THEN '통관'
+                 ELSE ''
+            END                                             ENTNM
+          , IFNULL(CASE WHEN IFNULL(X.ENTYN, 0) = 0 THEN 0
+                 ELSE (X.F_ENTQ - IFNULL(Z.E_IOQ, 0))
+            END,0)                            AS            ENTQ
+          , IFNULL(IFNULL(Z.E_IOQ, 0),0)                    E_IOQ
+          , CASE WHEN X.LTDYN = 1 THEN 'Y'
+                 ELSE 'N'
+            END                                             LTDYN
+          , X.MEDYN                                         MEDYN
+          , X.ENTNO                                         ENTNO
+          , DATE_FORMAT(X.ENTDATE,'%Y-%m-%d') AS ENTDATE
+          , X.ENTYN                                         ENTYN2
+          , X.LTDYN                                         LTDYN2
+          , X.ORG
+          , X.TINW
+          , X.IODT
+          , X.OUTQ
+          , X.OUTW
+          , X.CO_S
+          , X.CUST_S
+          , X.GOOD_S
+          , X.DATE_S
+          , X.IOQ
+          , X.IOW
+          , X.DOMYN
+          , X.IMPYN
+          , X.BOND
+          , X.EXPCNT
+       FROM
+     (SELECT   0                                    SEQNO
+             , A.CUST                               CUST
+             , A.CUST2                              CUST2
+             , D.CO                                 CO2
+             , A.GOOD                               GOOD
+             , B.GOODN                              GOODN
+             , B.GOODE                              GOODE
+             , B.SIZE                               SIZE
+             , B.MARK                               MARK
+             , B.UNIT                               UNIT
+             , B.WGT                                WGT
+             , B.TYPE                               TYPE
+             , IFNULL(B.CALQW, 0)                   CALQW
+             , A.RMNO                               RMNO
+             , A.LOTNO1                             LOTNO1
+             , A.LOTNO2                             LOTNO2
+             , A.BLNO                               BLNO
+             , A.CTNO                               CTNO
+             , A.BRAND                              BRAND
+             , A.GRADE                              GRADE
+             , A.ESTNO                              ESTNO
+             , C.PRODATE_F                          PRODATE_F
+             , C.EXPDATE_F                          EXPDATE_F
+             , C.ENTYN                              ENTYN
+             , IFNULL(E.ENT_Q, 0)                   ENTQ
+             , IFNULL(F.ENT_Q, 0)                   F_ENTQ
+             , IFNULL(F.ENTNO,'')                   ENTNO
+             , IFNULL(F.ENT_DATE,'')                ENTDATE
+             , C.LTDYN                              LTDYN
+             , C.MEDYN                              MEDYN
+             , C.ORG                                ORG
+             , C.TINQ                               TINQ
+             , C.TINW                               TINW
+             , A.LOTNO1                             IODT
+             , 0                                    OUTQ
+             , 0                                    OUTW
+             , IFNULL(MAX(A.CO_B), '')              CO_S
+             , IFNULL(MAX(A.CUST_B), '')            CUST_S
+             , IFNULL(MAX(A.GOOD_B), '')            GOOD_S
+             , IFNULL(MAX(A.DATE_B), '')            DATE_S
+             , IFNULL(SUM(A.IO_Q), 0)               IOQ
+             , IFNULL(SUM(A.IO_W), 0)               IOW
+             , IFNULL(MAX(A.DOMYN), 0)              DOMYN
+             , IFNULL(MAX(A.IMPYN), 0)              IMPYN
+             , IFNULL(MAX(G.BOND), 1)               BOND
+             , CASE WHEN LENGTH(TRIM(C.EXPDATE_F)) != 8 THEN ''
+                    ELSE CAST(DATEDIFF(DATE_FORMAT(C.EXPDATE_F, '%Y-%m-%d'),
+                         NOW()) AS CHAR)
+               END                                  EXPCNT
+         FROM
+      (SELECT  T.Y4,
+               T.CUST,
+               T.CUST2,
+               T.RMNO,
+               T.GOOD,
+               T.LOTNO1,
+               T.LOTNO2,
+               T.BLNO,
+               T.CTNO,
+               T.BRAND,
+               T.GRADE,
+               T.ESTNO,
+               S.CO      CO_B,
+               T.CUST_B  CUST_B,
+               T.GOOD_B  GOOD_B,
+               T.DATE_B  DATE_B,
+               T.LIVQ    IO_Q,
+               T.LIVW    IO_W,
+               T.DOMYN,
+               ''        IMPYN
+          FROM S24      T
+          LEFT JOIN S01 S ON T.CUST_B = S.CUST
+         WHERE T.CUST = @cust
+          AND T.Y4   = SUBSTRING(@reqDt,0,4)
+         UNION ALL
+        SELECT SUBSTRING(IODT, 1,4) Y4,
+               CUST,
+               CUST2,
+               RMNO,
+               GOOD,
+               LOTNO1,
+               LOTNO2,
+               BLNO,
+               CTNO,
+               BRAND,
+               GRADE,
+               ESTNO,
+               ''   CO_B,
+               ''   CUST_B,
+               ''   GOOD_B,
+               ''   DATE_B,
+               CASE LEFT(GUBN,1) WHEN '1' THEN IO_Q ELSE -IO_Q END IO_Q,
+               CASE LEFT(GUBN,1) WHEN '1' THEN IO_W ELSE -IO_W END IO_W,
+               DOMYN,
+               IMPYN
+          FROM S32D
+         WHERE CUST  =    @cust
+           AND IODT  LIKE CONCAT(SUBSTRING(@reqDt,0,4), '%')
+           AND GUBN  IN ('11','12','13','21','22','23','24'))   A
+          JOIN S03     B   ON A.CUST    = B.CUST
+                          AND A.GOOD    = B.GOOD
+        LEFT JOIN S23  C   ON A.CUST    = C.CUST
+                          AND A.CUST2   = C.CUST2
+                          AND A.GOOD    = C.GOOD
+                          AND A.LOTNO1  = C.LOTNO1
+                          AND A.LOTNO2  = C.LOTNO2
+                          AND A.BLNO    = C.BLNO
+          JOIN S01     D   ON A.CUST2   = D.CUST
+        LEFT JOIN  (SELECT CUST, CUST2, GOOD, LOTNO1, LOTNO2, BLNO,
+                           SUM(ENT_Q) ENT_Q
+                      FROM S25
+                     GROUP BY CUST, CUST2, GOOD, LOTNO1, LOTNO2, BLNO)  E
+                           ON A.CUST    = E.CUST
+                          AND A.CUST2   = E.CUST2
+                          AND A.GOOD    = E.GOOD
+                          AND A.LOTNO1  = E.LOTNO1
+                          AND A.LOTNO2  = E.LOTNO2
+                          AND A.BLNO    = E.BLNO
+        LEFT JOIN S25  F   ON A.CUST    = F.CUST
+                          AND A.CUST2   = F.CUST2
+                          AND A.GOOD    = F.GOOD
+                          AND A.LOTNO1  = F.LOTNO1
+                          AND A.LOTNO2  = F.LOTNO2
+                          AND A.BLNO    = F.BLNO
+          JOIN S04     G   ON A.RMNO    = G.RMNO
+       GROUP BY A.CUST
+              , A.CUST2
+              , D.CO
+              , A.GOOD
+              , B.GOODN
+              , B.GOODE
+              , B.SIZE
+              , B.UNIT
+              , B.WGT
+              , B.TYPE
+              , IFNULL(B.CALQW, 0)
+              , A.RMNO
+              , A.LOTNO1
+              , A.LOTNO2
+              , A.BLNO
+              , A.CTNO
+              , A.BRAND
+              , A.GRADE
+              , A.ESTNO
+              , C.PRODATE_F
+              , C.EXPDATE_F
+              , C.MEDYN
+              , C.ENTYN
+              , IFNULL(E.ENT_Q, 0)
+              , IFNULL(F.ENT_Q, 0)
+              , IFNULL(F.ENTNO,'')
+              , IFNULL(F.ENT_DATE,'')
+              , C.LTDYN
+              , C.ENTYN
+              , C.LTDYN
+              , C.ORG
+              , C.TINW
+              , C.EXPDATE_F ) X
+        LEFT JOIN  (SELECT CUST, CUST2, GOOD, LOTNO1, LOTNO2, BLNO, ENTNO,
+                           SUM(IO_Q) E_IOQ
+                      FROM S32D
+                     WHERE CUST  = @cust
+                       AND GUBN  = '21'
+                     GROUP BY CUST, CUST2, GOOD, LOTNO1, LOTNO2, BLNO, ENTNO)  Z
+              ON X.CUST    = Z.CUST
+             AND X.CUST2   = Z.CUST2
+             AND X.GOOD    = Z.GOOD
+             AND X.LOTNO1  = Z.LOTNO1
+             AND X.LOTNO2  = Z.LOTNO2
+             AND X.BLNO    = Z.BLNO
+             AND X.ENTNO   = Z.ENTNO
+       WHERE X.IOQ    > 0
+         AND X.F_ENTQ - IFNULL(Z.E_IOQ, -1) != 0
+         AND (X.GOOD  LIKE CONCAT(@goodn,'%')
+          OR X.GOODN  LIKE CONCAT(@goodn,'%'))
+         AND X.BLNO   LIKE CONCAT('%', @blno, '%')
+         AND X.CTNO   LIKE CONCAT('%', @ctno, '%')
+         AND X.LOTNO1 LIKE CONCAT(SUBSTRING(@lotno1,1,8),'%')
+       ORDER BY GOOD, LOTNO1
+    </requestReleaseSql>
+
+    <existsRequestSql>
+    SELECT CASE WHEN EXISTS(
+      SELECT *
+        FROM S32R A
+             JOIN S32D B ON A.IODT = B.IODT
+                        AND A.URNO = B.URNO
+                        AND A.GUBN = B.GUBN
+                        AND A.SRNO = B.SRNO
+                        AND A.SQNO = B.SQNO
+       WHERE A.CUST = @cust
+         AND A.REQDT = @reqDt
+         AND B.GOOD   = @goodn
+         AND B.RMNO   = @rmno
+         AND B.LOTNO1 = @lotno1
+         AND B.LOTNO2 = @lotno2
+         AND B.BLNO   = @blno
+         AND B.CTNO   = @ctno
+         AND B.BRAND  = @brand
+         AND B.GRADE  = @grade
+         AND B.ESTNO  = @estno
+         AND B.IODT   = @iodt)
+                  THEN 'Y' ELSE 'N' END AS existsYn
+    </existsRequestSql>
+
+    <requestGoodSql>
+      SELECT  A.CUST
+            ,A.CUST2
+            ,A.GOOD
+            ,A.RMNO
+            ,DATE_FORMAT(A.LOTNO1,'%Y-%m-%d') AS LOTNO1
+            ,A.LOTNO2
+            ,A.BLNO
+            ,A.CTNO
+            ,A.BRAND
+            ,A.GRADE
+            ,A.ESTNO
+            ,A.ENTNO
+            ,B.GOODN
+            ,B.SIZE
+            ,B.MARK
+            ,B.UNIT
+            ,B.WGT
+            ,DATE_FORMAT(A.PRODATE_F,'%Y-%m-%d') AS PRODATE_F
+            ,DATE_FORMAT(A.IODT,'%Y-%m-%d') AS IODT
+            ,A.URNO
+            ,'21'    AS GUBN
+            ,A.SRNO
+            ,A.SQNO
+      FROM S32D  A
+       JOIN S03  B   ON A.CUST  = B.CUST
+                    AND A.GOOD  = B.GOOD
+    WHERE A.CUST   = @cust
+      AND A.GUBN   = '11'
+      AND A.GOOD   = @goodn
+      AND A.RMNO   = @rmno
+      AND A.LOTNO1 = @lotno1
+      AND A.LOTNO2 = @lotno2
+      AND A.BLNO   = @blno
+      AND A.CTNO   = @ctno
+      AND A.BRAND  = @brand
+      AND A.GRADE  = @grade
+      AND A.ESTNO  = @estno
+      AND A.IODT   = @iodt
+
+    </requestGoodSql>
+
+    <retrieveRequestRelease>
+      SELECT A.CUST  ,A.CUST2 ,A.REQDT   ,A.REQNO   ,A.IODT
+            ,A.URNO  ,A.GUBN  ,A.SRNO    ,A.SQNO    ,A.OUTQ
+            ,A.OUTW  ,A.SEND  ,A.SEND2   ,A.PLATENO ,A.REQYN
+            ,A.SMSYN ,A.SMSUR ,DATE_FORMAT(A.SMSDATE,'%Y-%m-%d %h:%i:%s') AS SMSDATE ,A.RMK
+            ,A.GOOD ,A.RMNO
+            ,DATE_FORMAT(A.LOTNO1,'%Y-%m-%d') AS LOTNO1
+            ,A.LOTNO2 ,A.BLNO ,A.CTNO ,A.BRAND ,A.GRADE
+            ,A.ESTNO  ,A.ENTNO
+            ,C.GOODN  ,C.SIZE ,C.MARK ,C.UNIT ,C.WGT
+        FROM S32R A
+             JOIN S03 C  ON A.CUST  = C.CUST
+                        AND A.GOOD  = C.GOOD
+       WHERE A.CUST = @CUST
+         AND A.CUST2 = @CUST2
+         AND A.REQDT = @REQDT
+    </retrieveRequestRelease>
+
+    <insertS32rSql>
+      INSERT
+  INTO S32R
+      (CUST   ,CUST2   ,REQDT   ,REQNO  ,GOOD
+      ,LOTNO1 ,LOTNO2  ,BLNO    ,CTNO   ,BRAND
+      ,GRADE  ,ESTNO   ,ENTNO   ,RMNO    ,OUTQ   ,OUTW
+      ,SEND   ,SEND2   ,PLATENO ,REQYN  ,SMSYN
+      ,SMSUR  ,SMSDATE ,RMK     ,IODT   ,URNO
+      ,GUBN   ,SRNO    ,SQNO    ,CRUR   ,UPUR)
+SELECT @CUST   ,@CUST2   ,@REQDT   ,IFNULL(MAX(REQNO),0) + 1  ,@GOOD
+      ,REPLACE(@LOTNO1,'-','') ,@LOTNO2  ,@BLNO    ,@CTNO   ,@BRAND
+      ,@GRADE  ,@ESTNO   ,@ENTNO   ,@RMNO    ,@OUTQ   ,@OUTW
+      ,@SEND   ,@SEND2   ,@PLATENO ,@REQYN  ,@SMSYN
+      ,@SMSUR  ,NOW()    ,@RMK     ,NULL   ,NULL
+      ,@GUBN   ,NULL     ,NULL    ,@CRUR   ,@UPUR
+ FROM S32R
+ WHERE CUST = @CUST
+   AND CUST2 = @CUST2
+   AND REQDT = @REQDT
+    </insertS32rSql>
+
+  <updateS32rSql>
+      UPDATE  S32R
+         SET  OUTQ = @OUTQ
+             ,OUTW = @OUTW
+             ,SEND = @SEND
+             ,SEND2 = @SEND2
+             ,PLATENO = @PLATENO
+             ,RMK = @RMK
+       WHERE  CUST = @CUST
+         AND  CUST2 = @CUST2
+         AND  REQDT = @REQDT
+         AND  REQNO = @REQNO
+         AND  REQYN != 2
+  </updateS32rSql>
+
+  <deleteS32rSql>
+      DELETE
+        FROM  S32R
+       WHERE  CUST = @CUST
+         AND  CUST2 = @CUST2
+         AND  REQDT = @REQDT
+         AND  REQNO = @REQNO
+         AND  REQYN != 2
+  </deleteS32rSql>
+
+</query>
